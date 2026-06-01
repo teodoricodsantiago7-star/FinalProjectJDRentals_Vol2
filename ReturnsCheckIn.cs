@@ -539,4 +539,5 @@ namespace FinalProject
         private void btnUserManagement_Click(object sender, EventArgs e) { SafelyNavigateToForm(new UserManagement(this.currentLoggedInUserId)); }
         private void btnReports_Click(object sender, EventArgs e) { SafelyNavigateToForm(new Reports(this.currentLoggedInUserId)); }
     }
+    //Check langs
 }
