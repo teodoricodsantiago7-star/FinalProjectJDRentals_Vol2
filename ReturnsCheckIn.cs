@@ -44,42 +44,54 @@ namespace FinalProject
             if (txtItem != null) txtItem.ReadOnly = true;
             if (txtExpectedReturn != null) txtExpectedReturn.ReadOnly = true;
             if (txtDepositRefund != null) txtDepositRefund.ReadOnly = true;
+            if (txtOverdueFine != null) txtOverdueFine.ReadOnly = true;
 
-            if (cmbConditionAfter != null)
+            if (numDamagedQuantity != null)
             {
-                cmbConditionAfter.Items.Clear();
-                cmbConditionAfter.Items.AddRange(new string[] { "Good", "Damaged", "Broken" });
-                cmbConditionAfter.SelectedIndex = 0;
+                numDamagedQuantity.Minimum = 0;
+                numDamagedQuantity.Maximum = 999;
+                numDamagedQuantity.Value = 0;
+                numDamagedQuantity.Enabled = true;
+                numDamagedQuantity.ValueChanged += ItemQuantityCounters_ValueChanged;
+            }
 
-                cmbConditionAfter.SelectedIndexChanged -= CmbConditionAfter_SelectedIndexChanged;
-                cmbConditionAfter.SelectedIndexChanged += CmbConditionAfter_SelectedIndexChanged;
+            if (numBrokenQuantity != null)
+            {
+                numBrokenQuantity.Minimum = 0;
+                numBrokenQuantity.Maximum = 999;
+                numBrokenQuantity.Value = 0;
+                numBrokenQuantity.Enabled = true;
+                numBrokenQuantity.ValueChanged += ItemQuantityCounters_ValueChanged;
             }
 
             if (txtDamageNotes != null) txtDamageNotes.Enabled = false;
 
             dtpActualReturn.Value = DateTime.Now;
-
-            dtpActualReturn.ValueChanged -= (s, e) => CalculateRefundAndFines();
             dtpActualReturn.ValueChanged += (s, e) => CalculateRefundAndFines();
         }
 
-        private void CmbConditionAfter_SelectedIndexChanged(object sender, EventArgs e)
+        private void ItemQuantityCounters_ValueChanged(object sender, EventArgs e)
         {
-            if (cmbConditionAfter.SelectedItem.ToString() == "Good")
+            int damagedQty = numDamagedQuantity != null ? (int)numDamagedQuantity.Value : 0;
+            int brokenQty = numBrokenQuantity != null ? (int)numBrokenQuantity.Value : 0;
+
+            if (this.activeTransactionId > 0 && (damagedQty + brokenQty) > this.activeRentedQuantity)
             {
-                if (txtDamageNotes != null)
-                {
-                    txtDamageNotes.Enabled = false;
-                    txtDamageNotes.Text = string.Empty;
-                }
+                NumericUpDown currentControl = (NumericUpDown)sender;
+                MessageBox.Show("Total damaged and broken units cannot exceed the rented quantity.", "Limit Exceeded", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                currentControl.Value -= 1;
+                return;
             }
-            else
+
+            if (txtDamageNotes != null)
             {
-                if (txtDamageNotes != null) txtDamageNotes.Enabled = true;
+                bool hasDamageOrBreakage = (damagedQty > 0 || brokenQty > 0);
+                txtDamageNotes.Enabled = hasDamageOrBreakage;
+                if (!hasDamageOrBreakage) txtDamageNotes.Text = string.Empty;
             }
+
             CalculateRefundAndFines();
         }
-
         private void btnSearch_Click(object sender, EventArgs e)
         {
             string keyword = txtSearchCriteria.Text.Trim();
@@ -89,77 +101,80 @@ namespace FinalProject
                 return;
             }
 
-            Form searchModal = new Form()
-            {
-                Width = 500,
-                Height = 320,
-                FormBorderStyle = FormBorderStyle.FixedDialog,
-                Text = "Select Active Rental Record",
-                StartPosition = FormStartPosition.CenterParent,
-                MaximizeBox = false,
-                MinimizeBox = false,
-                BackColor = Color.White
-            };
+            Form searchModal = new Form();
+            ListBox lstResults = new ListBox();
+            Button btnSelect = new Button();
+            Button btnCancelClose = new Button();
+            DataTable resultsTable = new DataTable();
 
-            ListBox lstResults = new ListBox { Location = new Point(20, 20), Size = new Size(440, 200) };
-            Button btnPick = new Button { Text = "Select Record", Location = new Point(240, 235), Size = new Size(100, 30), DialogResult = DialogResult.OK };
-            Button btnClose = new Button { Text = "Cancel", Location = new Point(350, 235), Size = new Size(110, 30), DialogResult = DialogResult.Cancel };
+            searchModal.Text = "Select Active Rental Transaction";
+            searchModal.Size = new Size(500, 350);
+            searchModal.FormBorderStyle = FormBorderStyle.FixedDialog;
+            searchModal.StartPosition = FormStartPosition.CenterParent;
+            searchModal.MaximizeBox = false;
+            searchModal.MinimizeBox = false;
 
-            searchModal.Controls.AddRange(new Control[] { lstResults, btnPick, btnClose });
-            searchModal.AcceptButton = btnPick;
+            lstResults.Location = new Point(15, 15);
+            lstResults.Size = new Size(455, 220);
 
-            string query = @"
-                SELECT t.TransactionID, c.Name AS CustomerName, i.ItemName, rd.Quantity, t.RentalStartDate, t.ExpectedReturnDate, i.DailyRate, t.DepositAmount, t.TotalAmount, i.ItemID
-                FROM RentalTransactions t
-                INNER JOIN Customers c ON t.CustomerID = c.CustomerID
-                INNER JOIN RentalDetails rd ON t.TransactionID = rd.TransactionID
-                INNER JOIN Items i ON rd.ItemID = i.ItemID
-                WHERE t.Status IN ('Ongoing', 'Overdue')
-                  AND (c.Name LIKE '%' + @Keyword + '%' OR CAST(t.TransactionID AS VARCHAR) = @Keyword)
-                ORDER BY t.TransactionID DESC;";
+            btnSelect.Text = "Select";
+            btnSelect.DialogResult = DialogResult.OK;
+            btnSelect.Location = new Point(310, 260);
+            btnSelect.Size = new Size(75, 30);
 
-            DataTable displayTable = new DataTable();
-            displayTable.Columns.Add("TxID", typeof(int));
-            displayTable.Columns.Add("Display", typeof(string));
-            displayTable.Columns.Add("ItemID", typeof(int));
-            displayTable.Columns.Add("Quantity", typeof(int));
-            displayTable.Columns.Add("DailyRate", typeof(decimal));
-            displayTable.Columns.Add("Deposit", typeof(decimal));
-            displayTable.Columns.Add("TotalAmount", typeof(decimal));
-            displayTable.Columns.Add("CustName", typeof(string));
-            displayTable.Columns.Add("ItemName", typeof(string));
-            displayTable.Columns.Add("StartDate", typeof(DateTime));
-            displayTable.Columns.Add("ExpectedReturn", typeof(DateTime));
+            btnCancelClose.Text = "Cancel";
+            btnCancelClose.DialogResult = DialogResult.Cancel;
+            btnCancelClose.Location = new Point(395, 260);
+            btnCancelClose.Size = new Size(75, 30);
+
+            searchModal.Controls.AddRange(new Control[] { lstResults, btnSelect, btnCancelClose });
+            searchModal.AcceptButton = btnSelect;
+            searchModal.CancelButton = btnCancelClose;
+
+            string searchQuery = @"
+    SELECT rt.TransactionID AS TxID, rd.ItemID, rd.Quantity, i.DailyRate, rt.DepositAmount AS Deposit, 
+           rt.TotalAmount, rt.RentalStartDate AS StartDate, rt.ExpectedReturnDate AS ExpectedReturn, 
+           c.Name AS CustName, i.ItemName
+    FROM RentalTransactions rt
+    INNER JOIN Customers c ON rt.CustomerID = c.CustomerID
+    INNER JOIN RentalDetails rd ON rt.TransactionID = rd.TransactionID
+    INNER JOIN Items i ON rd.ItemID = i.ItemID
+    WHERE rt.Status IN ('Ongoing', 'Confirmed') AND (c.Name LIKE @Keyword OR CAST(rt.TransactionID AS VARCHAR) = @Keyword);";
+
 
             using (SqlConnection conn = new SqlConnection(connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
+            using (SqlCommand cmd = new SqlCommand(searchQuery, conn))
             {
-                cmd.Parameters.AddWithValue("@Keyword", keyword);
-                try
+                cmd.Parameters.AddWithValue("@Keyword", "%" + keyword + "%");
+                using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
                 {
-                    conn.Open();
-                    using (SqlDataReader r = cmd.ExecuteReader())
+                    try
                     {
-                        while (r.Read())
-                        {
-                            int tid = Convert.ToInt32(r["TransactionID"]);
-                            string cname = r["CustomerName"].ToString();
-                            string iname = r["ItemName"].ToString();
-                            int qty = Convert.ToInt32(r["Quantity"]);
-                            DateTime start = Convert.ToDateTime(r["RentalStartDate"]);
-                            DateTime expected = Convert.ToDateTime(r["ExpectedReturnDate"]);
-
-                            string rowString = $"Tx {tid}: {cname} - {iname} ({qty}x) | Return: {expected:MM/dd/yyyy}";
-                            displayTable.Rows.Add(tid, rowString, r["ItemID"], qty, r["DailyRate"], r["DepositAmount"], r["TotalAmount"], cname, iname, start, expected);
-                        }
+                        conn.Open();
+                        adapter.Fill(resultsTable);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Search query failed: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
                     }
                 }
-                catch { }
             }
 
-            lstResults.DataSource = displayTable;
-            lstResults.DisplayMember = "Display";
-            lstResults.ValueMember = "TxID";
+            if (resultsTable.Rows.Count == 0)
+            {
+                MessageBox.Show("No ongoing rental transactions found matching your criteria.", "No Records", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            resultsTable.Columns.Add("DisplayString", typeof(string));
+            foreach (DataRow row in resultsTable.Rows)
+            {
+                row["DisplayString"] = $"ID: {row["TxID"]} | {row["CustName"]} | {row["ItemName"]} ({row["Quantity"]}x)";
+            }
+
+            lstResults.DataSource = resultsTable;
+            lstResults.DisplayMember = "DisplayString";
 
             if (searchModal.ShowDialog() == DialogResult.OK && lstResults.SelectedIndex >= 0)
             {
@@ -178,55 +193,48 @@ namespace FinalProject
                 txtItem.Text = $"{selectedRow["ItemName"]} ({this.activeRentedQuantity}x)";
                 txtExpectedReturn.Text = this.activeExpectedReturnDate.ToString("MM/dd/yyyy hh:mm tt");
 
+                if (numDamagedQuantity != null)
+                {
+                    numDamagedQuantity.Maximum = this.activeRentedQuantity;
+                    numDamagedQuantity.Value = 0;
+                }
+                if (numBrokenQuantity != null)
+                {
+                    numBrokenQuantity.Maximum = this.activeRentedQuantity;
+                    numBrokenQuantity.Value = 0;
+                }
+
                 CalculateRefundAndFines();
             }
-        }
 
+            searchModal.Dispose();
+        }
         private void CalculateRefundAndFines()
         {
             if (this.activeTransactionId <= 0) return;
 
             decimal calculatedRefund = this.activeOriginalDeposit;
-            string condition = cmbConditionAfter?.SelectedItem?.ToString() ?? "Good";
-
-            if (condition == "Damaged")
-            {
-                calculatedRefund = this.activeOriginalDeposit * 0.50m;
-            }
-            else if (condition == "Broken")
-            {
-                calculatedRefund = 0.00m;
-            }
+            decimal overdueFine = 0;
 
             DateTime actualDate = dtpActualReturn.Value.Date;
-            DateTime startDate = this.activeRentalStartDate.Date;
             DateTime expectedDate = this.activeExpectedReturnDate.Date;
 
-            if (actualDate < startDate)
-            {
-                calculatedRefund = this.activeTransactionTotalAmount + this.activeOriginalDeposit;
-                if (txtDamageNotes != null)
-                {
-                    txtDamageNotes.Text = string.Empty;
-                }
-            }
-            else if (actualDate > expectedDate)
+            if (actualDate > expectedDate)
             {
                 int overdueDays = (int)(actualDate - expectedDate).TotalDays;
-                if (overdueDays <= 0) overdueDays = 1;
-
-                decimal fineAmount = this.activeItemDailyRate * this.activeRentedQuantity * overdueDays;
-                calculatedRefund -= fineAmount;
+                overdueFine = this.activeItemDailyRate * this.activeRentedQuantity * overdueDays;
+                if (txtOverdueFine != null) txtOverdueFine.Text = overdueFine.ToString("F2");
             }
-            else if (actualDate < expectedDate)
+            else if (txtOverdueFine != null)
+            {
+                txtOverdueFine.Text = "0.00";
+            }
+
+            if (actualDate < expectedDate)
             {
                 int daysEarlier = (int)(expectedDate - actualDate).TotalDays;
-
-                if (daysEarlier > 0)
-                {
-                    decimal netEarlyReturnCredit = this.activeItemDailyRate * this.activeRentedQuantity * daysEarlier;
-                    calculatedRefund += netEarlyReturnCredit;
-                }
+                decimal earlyCredit = this.activeItemDailyRate * this.activeRentedQuantity * daysEarlier;
+                calculatedRefund += earlyCredit;
             }
 
             if (calculatedRefund < 0) calculatedRefund = 0;
@@ -245,12 +253,43 @@ namespace FinalProject
                 return;
             }
 
-            string condition = cmbConditionAfter.SelectedItem.ToString();
-            string notesText = txtDamageNotes.Text.Trim();
-            decimal finalRefundValue = decimal.TryParse(txtDepositRefund.Text, out decimal val) ? val : 0;
+            string notesText = txtDamageNotes != null ? txtDamageNotes.Text.Trim() : string.Empty;
+            int damagedQty = numDamagedQuantity != null ? (int)numDamagedQuantity.Value : 0;
+            int brokenQty = numBrokenQuantity != null ? (int)numBrokenQuantity.Value : 0;
+            int goodQty = this.activeRentedQuantity - damagedQty - brokenQty;
+
+            string conditionSummary = "Good";
+            if (brokenQty > 0) conditionSummary = "Broken";
+            else if (damagedQty > 0) conditionSummary = "Damaged";
+
+            if (goodQty < 0)
+            {
+                MessageBox.Show("Total damaged + broken quantity cannot exceed rented quantity.", "Invalid Input", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (conditionSummary != "Good" && string.IsNullOrWhiteSpace(notesText))
+            {
+                MessageBox.Show("Please provide damage notes explaining the item's condition.", "Input Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            decimal finalRefundValue = decimal.TryParse(txtDepositRefund?.Text, out decimal val) ? val : 0;
+            decimal overdueFine = decimal.TryParse(txtOverdueFine?.Text ?? "0", out decimal f) ? f : 0;
 
             DateTime actualDate = dtpActualReturn.Value.Date;
-            DateTime startDate = this.activeRentalStartDate.Date;
+            decimal finalTotalAmount = this.activeTransactionTotalAmount;
+
+            if (actualDate < this.activeExpectedReturnDate.Date)
+            {
+                int daysUsed = (int)(actualDate - this.activeRentalStartDate.Date).TotalDays;
+                if (daysUsed <= 0) daysUsed = 1;
+                finalTotalAmount = this.activeItemDailyRate * this.activeRentedQuantity * daysUsed;
+            }
+            else if (actualDate > this.activeExpectedReturnDate.Date)
+            {
+                finalTotalAmount += overdueFine;
+            }
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
@@ -259,146 +298,139 @@ namespace FinalProject
                     conn.Open();
                     using (SqlTransaction trans = conn.BeginTransaction())
                     {
-                        try
+                        string updateTxSql = @"
+                            UPDATE RentalTransactions 
+                            SET Status = 'Completed', 
+                                ActualReturnDate = @ActualReturn, 
+                                TotalAmount = @NewTotal,
+                                Notes = @Notes 
+                            WHERE TransactionID = @TxID;";
+
+                        using (SqlCommand cmd = new SqlCommand(updateTxSql, conn, trans))
                         {
-                            if (actualDate < startDate)
-                            {
-                                string cancelTxSql = @"
-                                    UPDATE RentalTransactions 
-                                    SET Status = 'Cancelled', ActualReturnDate = @ActualReturn, Notes = @Notes, TotalAmount = 0
-                                    WHERE TransactionID = @TxID;
-
-                                    UPDATE Items 
-                                    SET AvailableQuantity = AvailableQuantity + @Qty,
-                                        Status = CASE WHEN Status = 'Fully Booked' THEN 'Available' ELSE Status END
-                                    WHERE ItemID = @ItemID;";
-
-                                using (SqlCommand cmdCancel = new SqlCommand(cancelTxSql, conn, trans))
-                                {
-                                    cmdCancel.Parameters.AddWithValue("@TxID", this.activeTransactionId);
-                                    cmdCancel.Parameters.AddWithValue("@ActualReturn", dtpActualReturn.Value);
-                                    cmdCancel.Parameters.AddWithValue("@Notes", "Cancelled via Early Return prior to Start: " + notesText);
-                                    cmdCancel.Parameters.AddWithValue("@Qty", this.activeRentedQuantity);
-                                    cmdCancel.Parameters.AddWithValue("@ItemID", this.activeItemId);
-                                    cmdCancel.ExecuteNonQuery();
-                                }
-                            }
-                            else
-                            {
-                                string completeTxSql = @"
-                                    DECLARE @OriginalStart DATETIME, @ExpectedEnd DATETIME, @DailyRate DECIMAL(10,2), @Qty INT;
-                                    
-                                    SELECT @OriginalStart = t.RentalStartDate, @ExpectedEnd = t.ExpectedReturnDate, @DailyRate = i.DailyRate, @Qty = rd.Quantity
-                                    FROM RentalTransactions t
-                                    INNER JOIN RentalDetails rd ON t.TransactionID = rd.TransactionID
-                                    INNER JOIN Items i ON rd.ItemID = i.ItemID
-                                    WHERE t.TransactionID = @TxID;
-
-                                    IF @ActualReturn < @ExpectedEnd AND @ActualReturn >= @OriginalStart
-                                    BEGIN
-                                        DECLARE @DaysUsed INT, @DaysEarlier INT, @NewTotal DECIMAL(10,2);
-                                        
-                                        SET @DaysUsed = DATEDIFF(day, CAST(@OriginalStart AS DATE), CAST(@ActualReturn AS DATE));
-                                        IF @DaysUsed <= 0 SET @DaysUsed = 1;
-
-                                        SET @DaysEarlier = DATEDIFF(day, CAST(@ActualReturn AS DATE), CAST(@ExpectedEnd AS DATE));
-                                        
-                                        IF @DaysEarlier > 0
-                                        BEGIN
-                                            SET @NewTotal = (@DailyRate * @Qty * @DaysUsed);
-                                            
-                                            UPDATE RentalTransactions 
-                                            SET TotalAmount = @NewTotal
-                                            WHERE TransactionID = @TxID;
-                                            
-                                            UPDATE RentalDetails 
-                                            SET Subtotal = @NewTotal 
-                                            WHERE TransactionID = @TxID AND ItemID = @ItemID;
-                                        END
-                                    END;
-
-                                    UPDATE RentalTransactions 
-                                    SET Status = 'Completed', ActualReturnDate = @ActualReturn, Notes = CASE WHEN @Notes <> '' THEN @Notes ELSE Notes END
-                                    WHERE TransactionID = @TxID;
-
-                                    UPDATE RentalDetails 
-                                    SET ConditionAfter = @Condition, DamageNotes = @Notes 
-                                    WHERE TransactionID = @TxID AND ItemID = @ItemID;";
-
-                                using (SqlCommand cmdComplete = new SqlCommand(completeTxSql, conn, trans))
-                                {
-                                    cmdComplete.Parameters.AddWithValue("@TxID", this.activeTransactionId);
-                                    cmdComplete.Parameters.AddWithValue("@ActualReturn", dtpActualReturn.Value);
-                                    cmdComplete.Parameters.AddWithValue("@Notes", notesText);
-                                    cmdComplete.Parameters.AddWithValue("@Condition", condition);
-                                    cmdComplete.Parameters.AddWithValue("@ItemID", this.activeItemId);
-                                    cmdComplete.ExecuteNonQuery();
-                                }
-
-                                string stockSql = "";
-                                if (condition == "Good")
-                                {
-                                    stockSql = @"
-                                        UPDATE Items 
-                                        SET AvailableQuantity = AvailableQuantity + @Qty,
-                                            Status = CASE WHEN Status = 'Fully Booked' THEN 'Available' ELSE Status END
-                                        WHERE ItemID = @ItemID;";
-                                }
-                                else
-                                {
-                                    stockSql = "UPDATE Items SET Status = 'Maintenance' WHERE ItemID = @ItemID;";
-                                }
-
-                                using (SqlCommand cmdStock = new SqlCommand(stockSql, conn, trans))
-                                {
-                                    cmdStock.Parameters.AddWithValue("@ItemID", this.activeItemId);
-                                    cmdStock.Parameters.AddWithValue("@Qty", this.activeRentedQuantity);
-                                    cmdStock.ExecuteNonQuery();
-                                }
-                            }
-
-                            if (finalRefundValue > 0)
-                            {
-                                string paymentSql = @"
-                                    INSERT INTO Payments (TransactionID, PaymentDate, Amount, Method, Notes)
-                                    VALUES (@TxID, GETDATE(), @Amount, 'Deposit Refund', @Notes);";
-
-                                using (SqlCommand cmdPay = new SqlCommand(paymentSql, conn, trans))
-                                {
-                                    cmdPay.Parameters.AddWithValue("@TxID", this.activeTransactionId);
-                                    cmdPay.Parameters.AddWithValue("@Amount", finalRefundValue);
-                                    cmdPay.Parameters.AddWithValue("@Notes", $"Processed check-in settlement. Condition: {condition}.");
-                                    cmdPay.ExecuteNonQuery();
-                                }
-                            }
-
-                            string logSql = @"
-                                INSERT INTO AuditLog (UserID, ActionType, TableName, RecordID, Description, ActionTime)
-                                VALUES (@UserID, 'UPDATE', 'RentalTransactions', @TxID, @Desc, GETDATE());";
-
-                            using (SqlCommand cmdLog = new SqlCommand(logSql, conn, trans))
-                            {
-                                cmdLog.Parameters.AddWithValue("@UserID", this.currentLoggedInUserId);
-                                cmdLog.Parameters.AddWithValue("@TxID", this.activeTransactionId);
-                                string actionString = actualDate < startDate ? "Full early-return cancellation sweep" : "Partial contract early check-in settlement";
-                                cmdLog.Parameters.AddWithValue("@Desc", $"Executed {actionString} for Item ID {this.activeItemId}. Condition: {condition}");
-                                cmdLog.ExecuteNonQuery();
-                            }
-
-                            trans.Commit();
-                            MessageBox.Show("Transaction status updated and closed successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                            ResetFormInputs();
+                            cmd.Parameters.AddWithValue("@TxID", this.activeTransactionId);
+                            cmd.Parameters.AddWithValue("@ActualReturn", dtpActualReturn.Value);
+                            cmd.Parameters.AddWithValue("@NewTotal", finalTotalAmount);
+                            cmd.Parameters.AddWithValue("@Notes", notesText);
+                            cmd.ExecuteNonQuery();
                         }
-                        catch (Exception ex)
+
+                        string updateDetailSql = @"
+                            UPDATE RentalDetails
+                            SET ConditionAfter = @ConditionAfter,
+                                DamageNotes = @DamageNotes
+                            WHERE TransactionID = @TxID AND ItemID = @ItemID;";
+
+                        using (SqlCommand cmd = new SqlCommand(updateDetailSql, conn, trans))
                         {
-                            trans.Rollback();
-                            MessageBox.Show("Failed to save check-in transaction: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            cmd.Parameters.AddWithValue("@TxID", this.activeTransactionId);
+                            cmd.Parameters.AddWithValue("@ItemID", this.activeItemId);
+                            cmd.Parameters.AddWithValue("@ConditionAfter", conditionSummary);
+                            cmd.Parameters.AddWithValue("@DamageNotes", string.IsNullOrWhiteSpace(notesText) ? (object)DBNull.Value : notesText);
+                            cmd.ExecuteNonQuery();
                         }
+
+                        if (goodQty > 0)
+                        {
+                            string stockSql = @"
+                                UPDATE Items 
+                                SET AvailableQuantity = AvailableQuantity + @Qty,
+                                    Status = CASE WHEN Status = 'Fully Booked' THEN 'Available' ELSE Status END
+                                WHERE ItemID = @ItemID;";
+                            using (SqlCommand cmd = new SqlCommand(stockSql, conn, trans))
+                            {
+                                cmd.Parameters.AddWithValue("@Qty", goodQty);
+                                cmd.Parameters.AddWithValue("@ItemID", this.activeItemId);
+                                cmd.ExecuteNonQuery();
+                            }
+                        }
+
+                        if (damagedQty > 0)
+                        {
+                            string maintLogSql = @"
+                                INSERT INTO MaintenanceLog (ItemID, Quantity, PullDate, DamageNotes, Status)
+                                VALUES (@ItemID, @Qty, GETDATE(), @Notes, 'In Repair');";
+
+                            using (SqlCommand cmd = new SqlCommand(maintLogSql, conn, trans))
+                            {
+                                cmd.Parameters.AddWithValue("@ItemID", this.activeItemId);
+                                cmd.Parameters.AddWithValue("@Qty", damagedQty);
+                                cmd.Parameters.AddWithValue("@Notes", notesText);
+                                cmd.ExecuteNonQuery();
+                            }
+
+                            string itemMaintSql = "UPDATE Items SET Status = 'Maintenance' WHERE ItemID = @ItemID;";
+                            using (SqlCommand cmd = new SqlCommand(itemMaintSql, conn, trans))
+                            {
+                                cmd.Parameters.AddWithValue("@ItemID", this.activeItemId);
+                                cmd.ExecuteNonQuery();
+                            }
+                        }
+
+                        if (brokenQty > 0)
+                        {
+                            string breakSql = @"
+                                UPDATE Items 
+                                SET TotalQuantity = TotalQuantity - @Qty
+                                WHERE ItemID = @ItemID;";
+                            using (SqlCommand cmd = new SqlCommand(breakSql, conn, trans))
+                            {
+                                cmd.Parameters.AddWithValue("@Qty", brokenQty);
+                                cmd.Parameters.AddWithValue("@ItemID", this.activeItemId);
+                                cmd.ExecuteNonQuery();
+                            }
+                        }
+
+                        if (overdueFine > 0)
+                        {
+                            string paymentSql = @"
+                                INSERT INTO Payments (TransactionID, Amount, PaymentDate, Method, Notes)
+                                VALUES (@TxID, @Amount, GETDATE(), 'Damage Charge', @Notes);";
+
+                            using (SqlCommand cmd = new SqlCommand(paymentSql, conn, trans))
+                            {
+                                cmd.Parameters.AddWithValue("@TxID", this.activeTransactionId);
+                                cmd.Parameters.AddWithValue("@Amount", overdueFine);
+                                cmd.Parameters.AddWithValue("@Notes", $"Overdue Fine. Condition: {conditionSummary}");
+                                cmd.ExecuteNonQuery();
+                            }
+                        }
+                        if (finalRefundValue > 0)
+                        {
+                            string paymentSql = @"
+                                INSERT INTO Payments (TransactionID, Amount, PaymentDate, Method, Notes)
+                                VALUES (@TxID, @Amount, GETDATE(), 'Deposit Refund', @Notes);";
+
+                            using (SqlCommand cmd = new SqlCommand(paymentSql, conn, trans))
+                            {
+                                cmd.Parameters.AddWithValue("@TxID", this.activeTransactionId);
+                                cmd.Parameters.AddWithValue("@Amount", finalRefundValue);
+                                cmd.Parameters.AddWithValue("@Notes", $"Deposit Refunded. Condition: {conditionSummary}");
+                                cmd.ExecuteNonQuery();
+                            }
+                        }
+
+                        string logSql = @"
+                            INSERT INTO AuditLog (UserID, ActionType, TableName, RecordID, Description, ActionTime)
+                            VALUES (@UserID, 'UPDATE', 'RentalTransactions', @TxID, @Desc, GETDATE());";
+
+                        using (SqlCommand cmdLog = new SqlCommand(logSql, conn, trans))
+                        {
+                            cmdLog.Parameters.AddWithValue("@UserID", this.currentLoggedInUserId);
+                            cmdLog.Parameters.AddWithValue("@TxID", this.activeTransactionId);
+                            string actionString = $"Return processed - Good: {goodQty}, Damaged: {damagedQty}, Broken: {brokenQty}, Overdue Fine: ₱{overdueFine}";
+                            cmdLog.Parameters.AddWithValue("@Desc", actionString);
+                            cmdLog.ExecuteNonQuery();
+                        }
+
+                        trans.Commit();
+                        MessageBox.Show("Return processed successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        ResetFormInputs();
                     }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Connection failure: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Failed to save check-in transaction: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
@@ -420,27 +452,17 @@ namespace FinalProject
             if (txtExpectedReturn != null) txtExpectedReturn.Clear();
             if (txtDamageNotes != null) txtDamageNotes.Clear();
             if (txtDepositRefund != null) txtDepositRefund.Text = "0.00";
-            if (cmbConditionAfter != null) cmbConditionAfter.SelectedIndex = 0;
-            dtpActualReturn.Value = DateTime.Now;
-        }
+            if (txtOverdueFine != null) txtOverdueFine.Text = "0.00";
 
-        private void OnFormRequiredExit(object sender, FormClosedEventArgs e)
-        {
-            Application.Exit();
-        }
-
-        private void SafelyNavigateToForm(Form targetForm)
-        {
-            if (pbUserProfilePic != null && pbUserProfilePic.Image != null)
+            if (numDamagedQuantity != null)
             {
-                pbUserProfilePic.Image.Dispose();
-                pbUserProfilePic.Image = null;
+                numDamagedQuantity.Value = 0;
             }
-            this.FormClosed -= OnFormRequiredExit;
-            targetForm.FormClosed += OnFormRequiredExit;
-            this.Hide();
-            targetForm.Show();
-            this.Dispose();
+            if (numBrokenQuantity != null)
+            {
+                numBrokenQuantity.Value = 0;
+            }
+            dtpActualReturn.Value = DateTime.Now;
         }
 
         private void LoadUserProfilePicture()
@@ -481,12 +503,32 @@ namespace FinalProject
             SafelyNavigateToForm(new DashBoard1(this.currentLoggedInUserId));
         }
 
+        private void SafelyNavigateToForm(Form targetForm)
+        {
+            if (pbUserProfilePic != null && pbUserProfilePic.Image != null)
+            {
+                pbUserProfilePic.Image.Dispose();
+                pbUserProfilePic.Image = null;
+            }
+            this.FormClosed -= OnFormRequiredExit;
+            targetForm.FormClosed += OnFormRequiredExit;
+            this.Hide();
+            targetForm.Show();
+            this.Dispose();
+        }
+
+        private void OnFormRequiredExit(object sender, FormClosedEventArgs e)
+        {
+            Application.Exit();
+        }
+
         private void btnHome_Click(object sender, EventArgs e) { SafelyNavigateToForm(new DashBoard1(this.currentLoggedInUserId)); }
         private void btnNewRentalTransaction_Click(object sender, EventArgs e) { SafelyNavigateToForm(new NewRentalTransaction(this.currentLoggedInUserId)); }
         private void btnCalendar_Click(object sender, EventArgs e) { SafelyNavigateToForm(new Calendar(this.currentLoggedInUserId)); }
         private void btnInventoryManagement_Click(object sender, EventArgs e) { SafelyNavigateToForm(new Inventory_Management(this.currentLoggedInUserId)); }
         private void btnRecords_Click(object sender, EventArgs e) { SafelyNavigateToForm(new Customer_Records(this.currentLoggedInUserId)); }
         private void btnBookingManagement_Click(object sender, EventArgs e) { SafelyNavigateToForm(new Booking_Management(this.currentLoggedInUserId)); }
+
         private void btnHome_Click_1(object sender, EventArgs e) { SafelyNavigateToForm(new DashBoard1(this.currentLoggedInUserId)); }
         private void btnNewRentalTransaction_Click_1(object sender, EventArgs e) { SafelyNavigateToForm(new NewRentalTransaction(this.currentLoggedInUserId)); }
         private void btnCalendar_Click_1(object sender, EventArgs e) { SafelyNavigateToForm(new Calendar(this.currentLoggedInUserId)); }
@@ -494,44 +536,7 @@ namespace FinalProject
         private void btnRecords_Click_1(object sender, EventArgs e) { SafelyNavigateToForm(new Customer_Records(this.currentLoggedInUserId)); }
         private void btnBookingManagement_Click_1(object sender, EventArgs e) { SafelyNavigateToForm(new Booking_Management(this.currentLoggedInUserId)); }
 
-        private void RestrictAdminControlsByRole()
-        {
-            if (btnUserManagement == null) return;
-
-            string query = "SELECT Role FROM Users WHERE UserID = @UserID;";
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
-            {
-                cmd.Parameters.AddWithValue("@UserID", this.currentLoggedInUserId);
-                try
-                {
-                    conn.Open();
-                    object res = cmd.ExecuteScalar();
-                    if (res != null && res != DBNull.Value)
-                    {
-                        string role = res.ToString().Trim();
-                        btnUserManagement.Visible = role.Equals("Admin", StringComparison.OrdinalIgnoreCase);
-                    }
-                    else
-                    {
-                        btnUserManagement.Visible = false;
-                    }
-                }
-                catch
-                {
-                    btnUserManagement.Visible = false;
-                }
-            }
-        }
-
-        private void btnUserManagement_Click(object sender, EventArgs e)
-        {
-            SafelyNavigateToForm(new UserManagement(this.currentLoggedInUserId));
-        }
-
-        private void btnReports_Click(object sender, EventArgs e)
-        {
-            SafelyNavigateToForm(new Reports(this.currentLoggedInUserId));
-        }
+        private void btnUserManagement_Click(object sender, EventArgs e) { SafelyNavigateToForm(new UserManagement(this.currentLoggedInUserId)); }
+        private void btnReports_Click(object sender, EventArgs e) { SafelyNavigateToForm(new Reports(this.currentLoggedInUserId)); }
     }
 }

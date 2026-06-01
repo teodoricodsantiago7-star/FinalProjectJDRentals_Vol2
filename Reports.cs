@@ -5,6 +5,7 @@ using System.Data.SqlClient;
 using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
+using System.Windows.Forms.DataVisualization.Charting;
 
 namespace FinalProject
 {
@@ -39,7 +40,9 @@ namespace FinalProject
                 WHERE RentalStartDate >= DATEADD(day, -7, GETDATE()) AND Status <> 'Cancelled';
 
                 SELECT ISNULL(SUM(TotalAmount), 0) FROM RentalTransactions 
-                WHERE MONTH(RentalStartDate) = MONTH(GETDATE()) AND YEAR(RentalStartDate) = YEAR(GETDATE()) AND Status <> 'Cancelled';";
+                WHERE MONTH(RentalStartDate) = MONTH(GETDATE()) 
+                  AND YEAR(RentalStartDate) = YEAR(GETDATE()) 
+                  AND Status <> 'Cancelled';";
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             using (SqlCommand cmd = new SqlCommand(queries, conn))
@@ -50,13 +53,13 @@ namespace FinalProject
                     using (SqlDataReader r = cmd.ExecuteReader())
                     {
                         if (r.Read() && lblDailySalesCount != null)
-                            lblDailySalesCount.Text = Convert.ToDecimal(r).ToString("N0");
+                            lblDailySalesCount.Text = Convert.ToDecimal(r[0]).ToString("N0");
 
                         if (r.NextResult() && r.Read() && lblWeeklyRevenueCount != null)
-                            lblWeeklyRevenueCount.Text = Convert.ToDecimal(r).ToString("N0");
+                            lblWeeklyRevenueCount.Text = Convert.ToDecimal(r[0]).ToString("N0");
 
                         if (r.NextResult() && r.Read() && lblMonthlyRevenueCount != null)
-                            lblMonthlyRevenueCount.Text = Convert.ToDecimal(r).ToString("N0");
+                            lblMonthlyRevenueCount.Text = Convert.ToDecimal(r[0]).ToString("N0");
                     }
                 }
                 catch { }
@@ -91,8 +94,8 @@ namespace FinalProject
             }
 
             chartMostRented.Series.Clear();
-            System.Windows.Forms.DataVisualization.Charting.Series series = chartMostRented.Series.Add("Most Rented Items");
-            series.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Bar;
+            Series series = chartMostRented.Series.Add("Most Rented Items");
+            series.ChartType = SeriesChartType.Bar;
 
             foreach (DataRow row in dt.Rows)
             {
@@ -146,11 +149,7 @@ namespace FinalProject
                         }
                     }
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Failed to pull summary log details: " + ex.Message, "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
+                catch { return; }
             }
 
             Form modal = new Form()
@@ -202,7 +201,6 @@ namespace FinalProject
 
             modal.Controls.AddRange(new Control[] { lblTotal, dgvSummary, btnClose });
             modal.AcceptButton = btnClose;
-
             modal.ShowDialog();
             modal.Dispose();
         }
@@ -232,11 +230,7 @@ namespace FinalProject
                     conn.Open();
                     utilTable.Load(cmd.ExecuteReader());
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Failed to pull item utilization details: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
+                catch { return; }
             }
 
             Form modal = new Form() { Width = 750, Height = 420, Text = "Item Inventory Utilization Analysis", StartPosition = FormStartPosition.CenterParent, FormBorderStyle = FormBorderStyle.FixedDialog, MaximizeBox = false, MinimizeBox = false, BackColor = Color.White };
@@ -269,11 +263,7 @@ namespace FinalProject
                     conn.Open();
                     custTable.Load(cmd.ExecuteReader());
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Failed to pull top customer data: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
+                catch { return; }
             }
 
             Form modal = new Form() { Width = 600, Height = 400, Text = "Top Customer Leaderboard", StartPosition = FormStartPosition.CenterParent, FormBorderStyle = FormBorderStyle.FixedDialog, MaximizeBox = false, MinimizeBox = false, BackColor = Color.White };
@@ -311,11 +301,7 @@ namespace FinalProject
                     conn.Open();
                     overdueTable.Load(cmd.ExecuteReader());
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Failed to pull overdue reports data: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
+                catch { return; }
             }
 
             Form modal = new Form() { Width = 780, Height = 420, Text = "Overdue Assets Tracking & Fee Estimates List", StartPosition = FormStartPosition.CenterParent, FormBorderStyle = FormBorderStyle.FixedDialog, MaximizeBox = false, MinimizeBox = false, BackColor = Color.White };
@@ -354,11 +340,7 @@ namespace FinalProject
                     conn.Open();
                     insightsTable.Load(cmd.ExecuteReader());
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Failed to load customer risk insight logs: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
+                catch { return; }
             }
 
             Form modal = new Form() { Width = 800, Height = 420, Text = "Customer Behavior & Risk Assessment Insights", StartPosition = FormStartPosition.CenterParent, FormBorderStyle = FormBorderStyle.FixedDialog, MaximizeBox = false, MinimizeBox = false, BackColor = Color.White };
@@ -390,11 +372,7 @@ namespace FinalProject
                     conn.Open();
                     revTable.Load(cmd.ExecuteReader());
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Failed to pull revenue data: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
+                catch { return; }
             }
 
             Form modal = new Form() { Width = 550, Height = 400, Text = "Revenue History Log", StartPosition = FormStartPosition.CenterParent, FormBorderStyle = FormBorderStyle.FixedDialog, MaximizeBox = false, MinimizeBox = false, BackColor = Color.White };
@@ -421,11 +399,7 @@ namespace FinalProject
                     conn.Open();
                     logTable.Load(cmd.ExecuteReader());
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Failed to pull log data: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
+                catch { return; }
             }
 
             Form modal = new Form() { Width = 600, Height = 400, Text = "System Transaction Logs", StartPosition = FormStartPosition.CenterParent, FormBorderStyle = FormBorderStyle.FixedDialog, MaximizeBox = false, MinimizeBox = false, BackColor = Color.White };
@@ -459,11 +433,7 @@ namespace FinalProject
                     conn.Open();
                     logTable.Load(cmd.ExecuteReader());
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Failed to pull system audit security logs: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
+                catch { return; }
             }
 
             Form modal = new Form() { Width = 850, Height = 460, Text = "System Activity & Security Audit Trail Logs", StartPosition = FormStartPosition.CenterParent, FormBorderStyle = FormBorderStyle.FixedDialog, MaximizeBox = false, MinimizeBox = false, BackColor = Color.White };
@@ -499,11 +469,7 @@ namespace FinalProject
                     conn.Open();
                     maintTable.Load(cmd.ExecuteReader());
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Failed to pull maintenance history data: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
+                catch { return; }
             }
 
             Form modal = new Form() { Width = 900, Height = 460, Text = "Inventory Maintenance & Repair History Logs", StartPosition = FormStartPosition.CenterParent, FormBorderStyle = FormBorderStyle.FixedDialog, MaximizeBox = false, MinimizeBox = false, BackColor = Color.White };
@@ -527,11 +493,7 @@ namespace FinalProject
                     conn.Open();
                     dt.Load(cmd.ExecuteReader());
                 }
-                catch
-                {
-                    MessageBox.Show("Failed to extract dataset.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
+                catch { return; }
             }
 
             using (SaveFileDialog sfd = new SaveFileDialog() { Filter = "CSV Files (*.csv)|*.csv", FileName = "System_Export_Report.csv" })
@@ -560,10 +522,7 @@ namespace FinalProject
                         File.WriteAllLines(sfd.FileName, lines);
                         MessageBox.Show("Report successfully exported to CSV spreadsheet file!", "Export Completed", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show("Export error: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
+                    catch { }
                 }
             }
         }
@@ -576,25 +535,6 @@ namespace FinalProject
         private void btnShareReport_Click(object sender, EventArgs e)
         {
             MessageBox.Show("Shared transmission dataset successfully mapped to distribution directories.", "Shared", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
-
-        private void OnFormRequiredExit(object sender, FormClosedEventArgs e)
-        {
-            Application.Exit();
-        }
-
-        private void SafelyNavigateToForm(Form targetForm)
-        {
-            if (pbUserProfilePic != null && pbUserProfilePic.Image != null)
-            {
-                pbUserProfilePic.Image.Dispose();
-                pbUserProfilePic.Image = null;
-            }
-            this.FormClosed -= OnFormRequiredExit;
-            targetForm.FormClosed += OnFormRequiredExit;
-            this.Hide();
-            targetForm.Show();
-            this.Dispose();
         }
 
         private void LoadUserProfilePicture()
@@ -630,6 +570,25 @@ namespace FinalProject
             }
         }
 
+        private void SafelyNavigateToForm(Form targetForm)
+        {
+            if (pbUserProfilePic != null && pbUserProfilePic.Image != null)
+            {
+                pbUserProfilePic.Image.Dispose();
+                pbUserProfilePic.Image = null;
+            }
+            this.FormClosed -= OnFormRequiredExit;
+            targetForm.FormClosed += OnFormRequiredExit;
+            this.Hide();
+            targetForm.Show();
+            this.Dispose();
+        }
+
+        private void OnFormRequiredExit(object sender, FormClosedEventArgs e)
+        {
+            Application.Exit();
+        }
+
         private void btnHome_Click(object sender, EventArgs e) { SafelyNavigateToForm(new DashBoard1(this.currentLoggedInUserId)); }
         private void btnNewRentalTransaction_Click(object sender, EventArgs e) { SafelyNavigateToForm(new NewRentalTransaction(this.currentLoggedInUserId)); }
         private void btnCalendar_Click(object sender, EventArgs e) { SafelyNavigateToForm(new Calendar(this.currentLoggedInUserId)); }
@@ -645,36 +604,6 @@ namespace FinalProject
         private void btnRecords_Click_1(object sender, EventArgs e) { SafelyNavigateToForm(new Customer_Records(this.currentLoggedInUserId)); }
         private void btnBookingManagement_Click_1(object sender, EventArgs e) { SafelyNavigateToForm(new Booking_Management(this.currentLoggedInUserId)); }
         private void btnReturns_Click_1(object sender, EventArgs e) { SafelyNavigateToForm(new ReturnsCheckIn(this.currentLoggedInUserId)); }
-
-        private void RestrictAdminControlsByRole()
-        {
-            if (btnUserManagement == null) return;
-
-            string query = "SELECT Role FROM Users WHERE UserID = @UserID;";
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
-            {
-                cmd.Parameters.AddWithValue("@UserID", this.currentLoggedInUserId);
-                try
-                {
-                    conn.Open();
-                    object res = cmd.ExecuteScalar();
-                    if (res != null && res != DBNull.Value)
-                    {
-                        string role = res.ToString().Trim();
-                        btnUserManagement.Visible = role.Equals("Admin", StringComparison.OrdinalIgnoreCase);
-                    }
-                    else
-                    {
-                        btnUserManagement.Visible = false;
-                    }
-                }
-                catch
-                {
-                    btnUserManagement.Visible = false;
-                }
-            }
-        }
 
         private void btnUserManagement_Click(object sender, EventArgs e)
         {

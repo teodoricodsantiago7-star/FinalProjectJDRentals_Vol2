@@ -55,22 +55,28 @@
             this.label9 = new System.Windows.Forms.Label();
             this.label10 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
-            this.label4 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
             this.txtDamageNotes = new System.Windows.Forms.TextBox();
             this.dtpActualReturn = new System.Windows.Forms.DateTimePicker();
-            this.cmbConditionAfter = new System.Windows.Forms.ComboBox();
             this.txtDepositRefund = new System.Windows.Forms.TextBox();
             this.txtSearchCriteria = new System.Windows.Forms.TextBox();
             this.btnConfirm = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
             this.UserNameHeader = new System.Windows.Forms.Label();
             this.pbUserProfilePic = new System.Windows.Forms.PictureBox();
+            this.txtOverdueFine = new System.Windows.Forms.TextBox();
+            this.label11 = new System.Windows.Forms.Label();
+            this.label12 = new System.Windows.Forms.Label();
+            this.numDamagedQuantity = new System.Windows.Forms.NumericUpDown();
+            this.label13 = new System.Windows.Forms.Label();
+            this.numBrokenQuantity = new System.Windows.Forms.NumericUpDown();
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pbUserProfilePic)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numDamagedQuantity)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numBrokenQuantity)).BeginInit();
             this.SuspendLayout();
             // 
             // label7
@@ -124,7 +130,7 @@
             this.panel1.Location = new System.Drawing.Point(0, 0);
             this.panel1.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(188, 566);
+            this.panel1.Size = new System.Drawing.Size(188, 576);
             this.panel1.TabIndex = 141;
             // 
             // button10
@@ -436,26 +442,12 @@
             this.label3.Font = new System.Drawing.Font("Arial", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
             this.label3.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.label3.Location = new System.Drawing.Point(227, 343);
+            this.label3.Location = new System.Drawing.Point(220, 343);
             this.label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(200, 19);
             this.label3.TabIndex = 156;
             this.label3.Text = "Actual Return Date / Time:";
-            // 
-            // label4
-            // 
-            this.label4.AutoSize = true;
-            this.label4.BackColor = System.Drawing.Color.Transparent;
-            this.label4.Font = new System.Drawing.Font("Arial", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label4.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.label4.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.label4.Location = new System.Drawing.Point(227, 375);
-            this.label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(175, 19);
-            this.label4.TabIndex = 157;
-            this.label4.Text = "Condition After Return:";
             // 
             // label5
             // 
@@ -464,7 +456,7 @@
             this.label5.Font = new System.Drawing.Font("Arial", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label5.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
             this.label5.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.label5.Location = new System.Drawing.Point(227, 404);
+            this.label5.Location = new System.Drawing.Point(220, 434);
             this.label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(191, 19);
@@ -478,7 +470,7 @@
             this.label6.Font = new System.Drawing.Font("Arial", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label6.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
             this.label6.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.label6.Location = new System.Drawing.Point(227, 502);
+            this.label6.Location = new System.Drawing.Point(729, 466);
             this.label6.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(126, 19);
@@ -488,44 +480,29 @@
             // txtDamageNotes
             // 
             this.txtDamageNotes.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtDamageNotes.Location = new System.Drawing.Point(448, 404);
+            this.txtDamageNotes.Location = new System.Drawing.Point(441, 436);
             this.txtDamageNotes.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.txtDamageNotes.Multiline = true;
             this.txtDamageNotes.Name = "txtDamageNotes";
-            this.txtDamageNotes.Size = new System.Drawing.Size(433, 78);
+            this.txtDamageNotes.Size = new System.Drawing.Size(265, 92);
             this.txtDamageNotes.TabIndex = 160;
             // 
             // dtpActualReturn
             // 
             this.dtpActualReturn.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.dtpActualReturn.Location = new System.Drawing.Point(448, 339);
+            this.dtpActualReturn.Location = new System.Drawing.Point(441, 339);
             this.dtpActualReturn.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.dtpActualReturn.Name = "dtpActualReturn";
             this.dtpActualReturn.Size = new System.Drawing.Size(265, 24);
             this.dtpActualReturn.TabIndex = 161;
             // 
-            // cmbConditionAfter
-            // 
-            this.cmbConditionAfter.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cmbConditionAfter.FormattingEnabled = true;
-            this.cmbConditionAfter.Items.AddRange(new object[] {
-            "Good",
-            "Minor Damage",
-            "Major Damage",
-            "Lost / Unreturned"});
-            this.cmbConditionAfter.Location = new System.Drawing.Point(448, 370);
-            this.cmbConditionAfter.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
-            this.cmbConditionAfter.Name = "cmbConditionAfter";
-            this.cmbConditionAfter.Size = new System.Drawing.Size(265, 26);
-            this.cmbConditionAfter.TabIndex = 162;
-            // 
             // txtDepositRefund
             // 
             this.txtDepositRefund.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtDepositRefund.Location = new System.Drawing.Point(367, 497);
+            this.txtDepositRefund.Location = new System.Drawing.Point(877, 461);
             this.txtDepositRefund.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.txtDepositRefund.Name = "txtDepositRefund";
-            this.txtDepositRefund.Size = new System.Drawing.Size(279, 26);
+            this.txtDepositRefund.Size = new System.Drawing.Size(194, 26);
             this.txtDepositRefund.TabIndex = 163;
             // 
             // txtSearchCriteria
@@ -541,7 +518,7 @@
             // 
             this.btnConfirm.BackColor = System.Drawing.Color.Sienna;
             this.btnConfirm.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnConfirm.Location = new System.Drawing.Point(652, 497);
+            this.btnConfirm.Location = new System.Drawing.Point(841, 530);
             this.btnConfirm.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.btnConfirm.Name = "btnConfirm";
             this.btnConfirm.Size = new System.Drawing.Size(112, 29);
@@ -554,7 +531,7 @@
             // 
             this.btnCancel.BackColor = System.Drawing.Color.Sienna;
             this.btnCancel.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnCancel.Location = new System.Drawing.Point(770, 498);
+            this.btnCancel.Location = new System.Drawing.Point(959, 530);
             this.btnCancel.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(112, 29);
@@ -584,25 +561,94 @@
             this.pbUserProfilePic.TabIndex = 167;
             this.pbUserProfilePic.TabStop = false;
             // 
+            // txtOverdueFine
+            // 
+            this.txtOverdueFine.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtOverdueFine.Location = new System.Drawing.Point(863, 491);
+            this.txtOverdueFine.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.txtOverdueFine.Name = "txtOverdueFine";
+            this.txtOverdueFine.Size = new System.Drawing.Size(208, 26);
+            this.txtOverdueFine.TabIndex = 170;
+            // 
+            // label11
+            // 
+            this.label11.AutoSize = true;
+            this.label11.BackColor = System.Drawing.Color.Transparent;
+            this.label11.Font = new System.Drawing.Font("Arial", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label11.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this.label11.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            this.label11.Location = new System.Drawing.Point(729, 496);
+            this.label11.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label11.Name = "label11";
+            this.label11.Size = new System.Drawing.Size(112, 19);
+            this.label11.TabIndex = 169;
+            this.label11.Text = "Overdue Fine:";
+            // 
+            // label12
+            // 
+            this.label12.AutoSize = true;
+            this.label12.BackColor = System.Drawing.Color.Transparent;
+            this.label12.Font = new System.Drawing.Font("Arial", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label12.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this.label12.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            this.label12.Location = new System.Drawing.Point(220, 374);
+            this.label12.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(135, 19);
+            this.label12.TabIndex = 171;
+            this.label12.Text = "Damaged Item(s)";
+            // 
+            // numDamagedQuantity
+            // 
+            this.numDamagedQuantity.Location = new System.Drawing.Point(441, 374);
+            this.numDamagedQuantity.Name = "numDamagedQuantity";
+            this.numDamagedQuantity.Size = new System.Drawing.Size(265, 22);
+            this.numDamagedQuantity.TabIndex = 172;
+            // 
+            // label13
+            // 
+            this.label13.AutoSize = true;
+            this.label13.BackColor = System.Drawing.Color.Transparent;
+            this.label13.Font = new System.Drawing.Font("Arial", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label13.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this.label13.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            this.label13.Location = new System.Drawing.Point(220, 405);
+            this.label13.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label13.Name = "label13";
+            this.label13.Size = new System.Drawing.Size(117, 19);
+            this.label13.TabIndex = 173;
+            this.label13.Text = "Broken Item(s)";
+            // 
+            // numBrokenQuantity
+            // 
+            this.numBrokenQuantity.Location = new System.Drawing.Point(441, 405);
+            this.numBrokenQuantity.Name = "numBrokenQuantity";
+            this.numBrokenQuantity.Size = new System.Drawing.Size(265, 22);
+            this.numBrokenQuantity.TabIndex = 174;
+            // 
             // ReturnsCheckIn
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Ivory;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
-            this.ClientSize = new System.Drawing.Size(1101, 566);
+            this.ClientSize = new System.Drawing.Size(1101, 576);
+            this.Controls.Add(this.numBrokenQuantity);
+            this.Controls.Add(this.label13);
+            this.Controls.Add(this.numDamagedQuantity);
+            this.Controls.Add(this.label12);
+            this.Controls.Add(this.txtOverdueFine);
+            this.Controls.Add(this.label11);
             this.Controls.Add(this.UserNameHeader);
             this.Controls.Add(this.pbUserProfilePic);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnConfirm);
             this.Controls.Add(this.txtSearchCriteria);
             this.Controls.Add(this.txtDepositRefund);
-            this.Controls.Add(this.cmbConditionAfter);
             this.Controls.Add(this.dtpActualReturn);
             this.Controls.Add(this.txtDamageNotes);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.label5);
-            this.Controls.Add(this.label4);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.btnSearch);
@@ -624,6 +670,8 @@
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pbUserProfilePic)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numDamagedQuantity)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numBrokenQuantity)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -658,17 +706,21 @@
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.Label label10;
         private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.TextBox txtDamageNotes;
         private System.Windows.Forms.DateTimePicker dtpActualReturn;
-        private System.Windows.Forms.ComboBox cmbConditionAfter;
         private System.Windows.Forms.TextBox txtDepositRefund;
         private System.Windows.Forms.TextBox txtSearchCriteria;
         private System.Windows.Forms.Button btnConfirm;
         private System.Windows.Forms.Button btnCancel;
         private System.Windows.Forms.Label UserNameHeader;
         private System.Windows.Forms.PictureBox pbUserProfilePic;
+        private System.Windows.Forms.TextBox txtOverdueFine;
+        private System.Windows.Forms.Label label11;
+        private System.Windows.Forms.Label label12;
+        private System.Windows.Forms.NumericUpDown numDamagedQuantity;
+        private System.Windows.Forms.Label label13;
+        private System.Windows.Forms.NumericUpDown numBrokenQuantity;
     }
 }
